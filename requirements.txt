@@ -1,9 +1,8 @@
-# Works on Python 3.10 - 3.13. Version ranges (not exact pins) so pip can pick wheels that fit your Python.
-numpy>=1.24,<3
-pandas>=2.0,<4
-scipy>=1.10
-scikit-learn>=1.3
-joblib>=1.3
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+scikit-learn==1.7.2
+joblib==1.6.0
 matplotlib>=3.7
 fastapi>=0.110
 uvicorn>=0.27
