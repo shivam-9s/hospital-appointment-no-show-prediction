@@ -67,25 +67,25 @@ The dashboard contains three sections:
 | Batch Review Queue | Upload CSV records, score appointments, and rank them by estimated risk |
 | Model & Safeguards | Explore model metadata, evaluation metrics, risk bands, and limitations |
 
-### Dashboard Preview
+## Dashboard Preview
 
-Add your actual screenshots to `docs/images/` and use the following Markdown:
+### Screenshot 1
+![Dashboard Screenshot 1](docs/images/screenshot-1.png)
 
-```markdown
-### Single Appointment Prediction
+### Screenshot 2
+![Dashboard Screenshot 2](docs/images/screenshot-2.png)
 
-![Single Appointment Prediction](docs/images/single-prediction.png)
+### Screenshot 3
+![Dashboard Screenshot 3](docs/images/screenshot-3.png)
 
-### Batch Review Queue
+### Screenshot 4
+![Dashboard Screenshot 4](docs/images/screenshot-4.png)
 
-![Batch Review Queue](docs/images/batch-review.png)
+### Screenshot 5
+![Dashboard Screenshot 5](docs/images/screenshot-5.png)
 
-### Model Evaluation and Safeguards
-
-![Model Evaluation](docs/images/model-metrics.png)
-```
-
----
+### Screenshot 6
+![Dashboard Screenshot 6](docs/images/screenshot-6.png)
 
 ## 3. Dataset
 
