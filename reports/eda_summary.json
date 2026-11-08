@@ -1,0 +1,130 @@
+{
+  "data_source": "kaggle",
+  "data_quality": {
+    "rows_raw": 110527,
+    "dropped_columns": [
+      "Hipertension",
+      "Diabetes",
+      "Alcoholism",
+      "Handcap",
+      "SMS_received"
+    ],
+    "missing_values_raw": {},
+    "duplicate_appointment_ids_removed": 0,
+    "invalid_age_rows_removed": 6,
+    "appointment_before_booking_rows_removed": 5,
+    "rows_clean": 110516,
+    "no_show_rate": 0.2019,
+    "date_range": [
+      "2016-04-29",
+      "2016-06-08"
+    ],
+    "unique_patients": 62296,
+    "data_source": "kaggle",
+    "split_rows": {
+      "train": 63529,
+      "test": 26449,
+      "val": 20538
+    },
+    "split_no_show_rate": {
+      "test": 0.1846,
+      "train": 0.2094,
+      "val": 0.2008
+    },
+    "split_date_ranges": {
+      "test": [
+        "2016-06-01",
+        "2016-06-08"
+      ],
+      "train": [
+        "2016-04-29",
+        "2016-05-19"
+      ],
+      "val": [
+        "2016-05-20",
+        "2016-05-31"
+      ]
+    }
+  },
+  "raw_columns": [
+    "PatientId",
+    "AppointmentID",
+    "Gender",
+    "ScheduledDay",
+    "AppointmentDay",
+    "Age",
+    "Neighbourhood",
+    "Scholarship",
+    "Hipertension",
+    "Diabetes",
+    "Alcoholism",
+    "Handcap",
+    "SMS_received",
+    "No-show"
+  ],
+  "raw_dtypes": {
+    "PatientId": "float64",
+    "AppointmentID": "int64",
+    "Gender": "str",
+    "ScheduledDay": "str",
+    "AppointmentDay": "str",
+    "Age": "int64",
+    "Neighbourhood": "str",
+    "Scholarship": "int64",
+    "Hipertension": "int64",
+    "Diabetes": "int64",
+    "Alcoholism": "int64",
+    "Handcap": "int64",
+    "SMS_received": "int64",
+    "No-show": "str"
+  },
+  "age_describe_raw": {
+    "count": 110527.0,
+    "mean": 37.09,
+    "std": 23.11,
+    "min": -1.0,
+    "25%": 18.0,
+    "50%": 37.0,
+    "75%": 55.0,
+    "max": 115.0
+  },
+  "class_balance": {
+    "0": 0.7981,
+    "1": 0.2019
+  },
+  "single_feature_auc_train": {
+    "lead_days": 0.7003,
+    "log_lead_days": 0.7003,
+    "same_day": 0.6672,
+    "scheduled_hour": 0.5488,
+    "age": 0.5449,
+    "prior_appointments": 0.5322,
+    "has_history": 0.532,
+    "scholarship": 0.5117,
+    "days_since_last_appointment": 0.5019,
+    "prior_no_shows": 0.5001,
+    "prior_no_show_rate": 0.5001
+  },
+  "leakage_review": {
+    "max_single_feature_auc": 0.7003,
+    "note": "No single feature has an implausibly high AUC (>0.9), the signature of target leakage.",
+    "excluded_post_booking": [
+      "SMS_received"
+    ],
+    "excluded_sensitive_clinical": [
+      "Hipertension",
+      "Diabetes",
+      "Alcoholism",
+      "Handcap"
+    ],
+    "audit_only": [
+      "gender"
+    ],
+    "history_rule": "prior_* features count only appointments whose DATE is strictly before the booking date"
+  },
+  "sms_received_no_show_rate_raw": {
+    "0": 0.167,
+    "1": 0.2757
+  },
+  "sms_received_note": "SMS is sent after booking, only for longer lead times - it is a post-booking intervention confounded with lead time, so it is excluded from the features."
+}

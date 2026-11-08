@@ -1,0 +1,34 @@
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Testing and development
+.pytest_cache/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Raw and processed datasets
+data/raw/*
+!data/raw/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
+
+# Generated sample data
+data/sample_bookings.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

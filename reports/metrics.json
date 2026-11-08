@@ -1,0 +1,602 @@
+{
+  "baselines": {
+    "never_flag": {
+      "threshold": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flag_rate": 0.0,
+      "tn": 21567,
+      "fp": 0,
+      "fn": 4882,
+      "tp": 0,
+      "business_cost": 19528.0,
+      "cost_per_appointment": 0.7383,
+      "roc_auc": 0.5,
+      "pr_auc": 0.1846
+    },
+    "flag_everyone": {
+      "threshold": 0.5,
+      "precision": 0.1846,
+      "recall": 1.0,
+      "f1": 0.3116,
+      "flag_rate": 1.0,
+      "tn": 0,
+      "fp": 21567,
+      "fn": 0,
+      "tp": 4882,
+      "business_cost": 21567.0,
+      "cost_per_appointment": 0.8154,
+      "roc_auc": 0.5,
+      "pr_auc": 0.1846
+    },
+    "lead_time_rule": {
+      "threshold": 1.0,
+      "precision": 0.26,
+      "recall": 0.9236,
+      "f1": 0.4057,
+      "flag_rate": 0.6558,
+      "tn": 8731,
+      "fp": 12836,
+      "fn": 373,
+      "tp": 4509,
+      "business_cost": 14328.0,
+      "cost_per_appointment": 0.5417,
+      "roc_auc": 0.6914,
+      "pr_auc": 0.2819,
+      "rule": "flag if lead_days >= 1"
+    },
+    "train_prior_probability": {
+      "brier": 0.1511
+    }
+  },
+  "models": {
+    "logistic_regression": {
+      "best_params": {
+        "C": 0.03
+      },
+      "val_pr_auc": 0.3458,
+      "selection_threshold_rule": "max F1 on validation (raw, class-weighted scores)",
+      "threshold": 0.5352,
+      "precision": 0.2813,
+      "recall": 0.7745,
+      "f1": 0.4127,
+      "flag_rate": 0.5082,
+      "tn": 11907,
+      "fp": 9660,
+      "fn": 1101,
+      "tp": 3781,
+      "business_cost": 14064.0,
+      "cost_per_appointment": 0.5317,
+      "roc_auc": 0.7171,
+      "pr_auc": 0.3124,
+      "brier_raw": 0.2273
+    },
+    "random_forest": {
+      "best_params": {
+        "min_samples_leaf": 30,
+        "max_depth": 8
+      },
+      "val_pr_auc": 0.3487,
+      "selection_threshold_rule": "max F1 on validation (raw, class-weighted scores)",
+      "threshold": 0.5632,
+      "precision": 0.2926,
+      "recall": 0.6731,
+      "f1": 0.4079,
+      "flag_rate": 0.4246,
+      "tn": 13622,
+      "fp": 7945,
+      "fn": 1596,
+      "tp": 3286,
+      "business_cost": 14329.0,
+      "cost_per_appointment": 0.5418,
+      "roc_auc": 0.7188,
+      "pr_auc": 0.3141,
+      "brier_raw": 0.2135
+    },
+    "hist_gradient_boosting": {
+      "best_params": {
+        "learning_rate": 0.03,
+        "max_depth": 3,
+        "max_iter": 300
+      },
+      "val_pr_auc": 0.357,
+      "selection_threshold_rule": "max F1 on validation (raw, class-weighted scores)",
+      "threshold": 0.5616,
+      "precision": 0.3031,
+      "recall": 0.6884,
+      "f1": 0.4209,
+      "flag_rate": 0.4192,
+      "tn": 13841,
+      "fp": 7726,
+      "fn": 1521,
+      "tp": 3361,
+      "business_cost": 13810.0,
+      "cost_per_appointment": 0.5221,
+      "roc_auc": 0.7291,
+      "pr_auc": 0.3296,
+      "brier_raw": 0.2163
+    }
+  },
+  "tuning": {
+    "logistic_regression": [
+      {
+        "params": {
+          "C": 0.03
+        },
+        "val_pr_auc": 0.3458
+      },
+      {
+        "params": {
+          "C": 0.3
+        },
+        "val_pr_auc": 0.3445
+      },
+      {
+        "params": {
+          "C": 3.0
+        },
+        "val_pr_auc": 0.3443
+      }
+    ],
+    "random_forest": [
+      {
+        "params": {
+          "min_samples_leaf": 30,
+          "max_depth": 8
+        },
+        "val_pr_auc": 0.3487
+      },
+      {
+        "params": {
+          "min_samples_leaf": 60,
+          "max_depth": 10
+        },
+        "val_pr_auc": 0.348
+      },
+      {
+        "params": {
+          "min_samples_leaf": 100,
+          "max_depth": null
+        },
+        "val_pr_auc": 0.3456
+      }
+    ],
+    "hist_gradient_boosting": [
+      {
+        "params": {
+          "learning_rate": 0.05,
+          "max_depth": 3,
+          "max_iter": 150
+        },
+        "val_pr_auc": 0.3559
+      },
+      {
+        "params": {
+          "learning_rate": 0.05,
+          "max_depth": 4,
+          "max_iter": 250
+        },
+        "val_pr_auc": 0.357
+      },
+      {
+        "params": {
+          "learning_rate": 0.03,
+          "max_depth": 3,
+          "max_iter": 300
+        },
+        "val_pr_auc": 0.357
+      }
+    ]
+  },
+  "selected_model": "hist_gradient_boosting",
+  "final_model": {
+    "name": "hist_gradient_boosting",
+    "calibration": "Platt scaling (logistic regression on logit score) fitted on the validation set",
+    "operating_threshold": 0.1751,
+    "theoretical_cost_threshold": 0.2,
+    "test": {
+      "threshold": 0.1751,
+      "precision": 0.2744,
+      "recall": 0.8689,
+      "f1": 0.4171,
+      "flag_rate": 0.5844,
+      "tn": 10351,
+      "fp": 11216,
+      "fn": 640,
+      "tp": 4242,
+      "business_cost": 13776.0,
+      "cost_per_appointment": 0.5209,
+      "roc_auc": 0.7291,
+      "pr_auc": 0.3296,
+      "brier_calibrated": 0.1359,
+      "brier_raw_uncalibrated": 0.2163,
+      "brier_reference_train_prior": 0.1511
+    },
+    "test_at_f1_threshold": {
+      "threshold": 0.2323,
+      "precision": 0.3031,
+      "recall": 0.6884,
+      "f1": 0.4209,
+      "flag_rate": 0.4192,
+      "tn": 13841,
+      "fp": 7726,
+      "fn": 1521,
+      "tp": 3361,
+      "business_cost": 13810.0,
+      "cost_per_appointment": 0.5221
+    },
+    "test_at_theoretical_threshold": {
+      "threshold": 0.2,
+      "precision": 0.2847,
+      "recall": 0.8019,
+      "f1": 0.4202,
+      "flag_rate": 0.5199,
+      "tn": 11732,
+      "fp": 9835,
+      "fn": 967,
+      "tp": 3915,
+      "business_cost": 13703.0,
+      "cost_per_appointment": 0.5181
+    }
+  },
+  "threshold_sweep_test": [
+    {
+      "threshold": 0.1,
+      "precision": 0.2598,
+      "recall": 0.9459,
+      "f1": 0.4076,
+      "flag_rate": 0.6721,
+      "tn": 8408,
+      "fp": 13159,
+      "fn": 264,
+      "tp": 4618,
+      "business_cost": 14215.0,
+      "cost_per_appointment": 0.5374
+    },
+    {
+      "threshold": 0.15,
+      "precision": 0.2667,
+      "recall": 0.9134,
+      "f1": 0.4129,
+      "flag_rate": 0.6321,
+      "tn": 9307,
+      "fp": 12260,
+      "fn": 423,
+      "tp": 4459,
+      "business_cost": 13952.0,
+      "cost_per_appointment": 0.5275
+    },
+    {
+      "threshold": 0.2,
+      "precision": 0.2847,
+      "recall": 0.8019,
+      "f1": 0.4202,
+      "flag_rate": 0.5199,
+      "tn": 11732,
+      "fp": 9835,
+      "fn": 967,
+      "tp": 3915,
+      "business_cost": 13703.0,
+      "cost_per_appointment": 0.5181
+    },
+    {
+      "threshold": 0.25,
+      "precision": 0.3102,
+      "recall": 0.6157,
+      "f1": 0.4126,
+      "flag_rate": 0.3663,
+      "tn": 14884,
+      "fp": 6683,
+      "fn": 1876,
+      "tp": 3006,
+      "business_cost": 14187.0,
+      "cost_per_appointment": 0.5364
+    },
+    {
+      "threshold": 0.3,
+      "precision": 0.336,
+      "recall": 0.4445,
+      "f1": 0.3827,
+      "flag_rate": 0.2442,
+      "tn": 17279,
+      "fp": 4288,
+      "fn": 2712,
+      "tp": 2170,
+      "business_cost": 15136.0,
+      "cost_per_appointment": 0.5723
+    },
+    {
+      "threshold": 0.35,
+      "precision": 0.3591,
+      "recall": 0.2808,
+      "f1": 0.3152,
+      "flag_rate": 0.1444,
+      "tn": 19120,
+      "fp": 2447,
+      "fn": 3511,
+      "tp": 1371,
+      "business_cost": 16491.0,
+      "cost_per_appointment": 0.6235
+    },
+    {
+      "threshold": 0.4,
+      "precision": 0.4185,
+      "recall": 0.0715,
+      "f1": 0.1221,
+      "flag_rate": 0.0315,
+      "tn": 21082,
+      "fp": 485,
+      "fn": 4533,
+      "tp": 349,
+      "business_cost": 18617.0,
+      "cost_per_appointment": 0.7039
+    },
+    {
+      "threshold": 0.5,
+      "precision": 0.5455,
+      "recall": 0.0025,
+      "f1": 0.0049,
+      "flag_rate": 0.0008,
+      "tn": 21557,
+      "fp": 10,
+      "fn": 4870,
+      "tp": 12,
+      "business_cost": 19490.0,
+      "cost_per_appointment": 0.7369
+    }
+  ],
+  "precision_at_top_k_test": {
+    "top_5pct": {
+      "precision": 0.4024,
+      "lift_vs_base_rate": 2.18
+    },
+    "top_10pct": {
+      "precision": 0.3714,
+      "lift_vs_base_rate": 2.012
+    },
+    "top_20pct": {
+      "precision": 0.3475,
+      "lift_vs_base_rate": 1.883
+    },
+    "top_30pct": {
+      "precision": 0.3233,
+      "lift_vs_base_rate": 1.751
+    }
+  },
+  "risk_bands_validation": [
+    {
+      "label": "very low",
+      "low": 0.0,
+      "high": 0.1,
+      "n_validation": 7038,
+      "observed_no_show_rate_validation": 0.0327
+    },
+    {
+      "label": "low",
+      "low": 0.1,
+      "high": 0.2,
+      "n_validation": 2053,
+      "observed_no_show_rate_validation": 0.1754
+    },
+    {
+      "label": "medium",
+      "low": 0.2,
+      "high": 0.3,
+      "n_validation": 5467,
+      "observed_no_show_rate_validation": 0.2524
+    },
+    {
+      "label": "high",
+      "low": 0.3,
+      "high": 0.45,
+      "n_validation": 5815,
+      "observed_no_show_rate_validation": 0.3591
+    },
+    {
+      "label": "very high",
+      "low": 0.45,
+      "high": 1.0,
+      "n_validation": 165,
+      "observed_no_show_rate_validation": 0.4
+    }
+  ],
+  "subgroup_audit_test": {
+    "gender": [
+      {
+        "group": "F",
+        "n": 17314,
+        "observed_no_show_rate": 0.1828,
+        "mean_predicted_probability": 0.1945,
+        "flag_rate": 0.5917,
+        "recall": 0.8736,
+        "precision": 0.2699
+      },
+      {
+        "group": "M",
+        "n": 9135,
+        "observed_no_show_rate": 0.188,
+        "mean_predicted_probability": 0.1891,
+        "flag_rate": 0.5708,
+        "recall": 0.8602,
+        "precision": 0.2833
+      }
+    ],
+    "age_group": [
+      {
+        "group": "0-17",
+        "n": 6498,
+        "observed_no_show_rate": 0.2011,
+        "mean_predicted_probability": 0.2184,
+        "flag_rate": 0.618,
+        "recall": 0.9304,
+        "precision": 0.3028
+      },
+      {
+        "group": "18-34",
+        "n": 5584,
+        "observed_no_show_rate": 0.2233,
+        "mean_predicted_probability": 0.2274,
+        "flag_rate": 0.6531,
+        "recall": 0.9479,
+        "precision": 0.3241
+      },
+      {
+        "group": "35-64",
+        "n": 10743,
+        "observed_no_show_rate": 0.1675,
+        "mean_predicted_probability": 0.1767,
+        "flag_rate": 0.5839,
+        "recall": 0.851,
+        "precision": 0.2441
+      },
+      {
+        "group": "65+",
+        "n": 3624,
+        "observed_no_show_rate": 0.146,
+        "mean_predicted_probability": 0.1402,
+        "flag_rate": 0.42,
+        "recall": 0.5917,
+        "precision": 0.2057
+      }
+    ],
+    "scholarship": [
+      {
+        "group": "0",
+        "n": 23888,
+        "observed_no_show_rate": 0.1819,
+        "mean_predicted_probability": 0.1893,
+        "flag_rate": 0.5814,
+        "recall": 0.8608,
+        "precision": 0.2694
+      },
+      {
+        "group": "1",
+        "n": 2561,
+        "observed_no_show_rate": 0.2093,
+        "mean_predicted_probability": 0.2236,
+        "flag_rate": 0.613,
+        "recall": 0.9347,
+        "precision": 0.3191
+      }
+    ]
+  },
+  "permutation_importance_validation": [
+    {
+      "feature": "lead_days",
+      "importance": 0.12215,
+      "std": 0.00296
+    },
+    {
+      "feature": "age",
+      "importance": 0.03457,
+      "std": 0.00241
+    },
+    {
+      "feature": "neighbourhood",
+      "importance": 0.00558,
+      "std": 0.00423
+    },
+    {
+      "feature": "prior_no_show_rate",
+      "importance": 0.00493,
+      "std": 0.00046
+    },
+    {
+      "feature": "scholarship",
+      "importance": 0.00418,
+      "std": 0.00117
+    },
+    {
+      "feature": "prior_no_shows",
+      "importance": 0.00413,
+      "std": 0.00028
+    },
+    {
+      "feature": "scheduled_hour",
+      "importance": 0.00341,
+      "std": 0.00059
+    },
+    {
+      "feature": "prior_appointments",
+      "importance": 0.0019,
+      "std": 0.0006
+    },
+    {
+      "feature": "days_since_last_appointment",
+      "importance": 0.00176,
+      "std": 0.00041
+    },
+    {
+      "feature": "scheduled_weekday",
+      "importance": 0.00118,
+      "std": 0.00022
+    },
+    {
+      "feature": "appointment_weekday",
+      "importance": 0.00082,
+      "std": 0.00019
+    },
+    {
+      "feature": "same_day",
+      "importance": 5e-05,
+      "std": 8e-05
+    },
+    {
+      "feature": "log_lead_days",
+      "importance": 0.0,
+      "std": 0.0
+    },
+    {
+      "feature": "has_history",
+      "importance": 0.0,
+      "std": 0.0
+    }
+  ],
+  "data_quality": {
+    "rows_raw": 110527,
+    "dropped_columns": [
+      "Hipertension",
+      "Diabetes",
+      "Alcoholism",
+      "Handcap",
+      "SMS_received"
+    ],
+    "missing_values_raw": {},
+    "duplicate_appointment_ids_removed": 0,
+    "invalid_age_rows_removed": 6,
+    "appointment_before_booking_rows_removed": 5,
+    "rows_clean": 110516,
+    "no_show_rate": 0.2019,
+    "date_range": [
+      "2016-04-29",
+      "2016-06-08"
+    ],
+    "unique_patients": 62296,
+    "data_source": "kaggle",
+    "split_rows": {
+      "train": 63529,
+      "test": 26449,
+      "val": 20538
+    },
+    "split_no_show_rate": {
+      "test": 0.1846,
+      "train": 0.2094,
+      "val": 0.2008
+    },
+    "split_date_ranges": {
+      "test": [
+        "2016-06-01",
+        "2016-06-08"
+      ],
+      "train": [
+        "2016-04-29",
+        "2016-05-19"
+      ],
+      "val": [
+        "2016-05-20",
+        "2016-05-31"
+      ]
+    }
+  }
+}

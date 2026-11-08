@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No-Show Risk Desk</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--ink:#1b2430;--mute:#637083;--line:#dfe3e9;--brand:#2f5d8c;--good:#2e7d4f;--warn:#b7791f;--bad:#c0392b;--chip:#eef2f7}
+  @media (prefers-color-scheme:dark){:root{--bg:#10151c;--card:#18202a;--ink:#e8edf3;--mute:#93a1b3;--line:#2a3441;--brand:#6aa3d8;--good:#58b27c;--warn:#e0a84a;--bad:#e8715f;--chip:#212b37}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:18px 16px 8px;max-width:1100px;margin:auto}
+  h1{font-size:20px;margin:0}
+  .sub{color:var(--mute);font-size:13px;margin-top:2px}
+  .banner{max-width:1100px;margin:8px auto 0;padding:10px 14px;background:var(--chip);border-left:4px solid var(--warn);border-radius:6px;font-size:13px}
+  main{max-width:1100px;margin:auto;padding:12px 16px 40px}
+  nav{display:flex;gap:6px;margin:10px 0}
+  nav button{background:var(--chip);border:1px solid var(--line);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+  nav button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+  label{display:block;font-size:12px;color:var(--mute);margin:10px 0 3px}
+  input,select{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button.primary{margin-top:14px;background:var(--brand);color:#fff;border:0;padding:10px 16px;border-radius:8px;font:inherit;cursor:pointer}
+  button.small{padding:4px 9px;border-radius:6px;border:1px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer;font-size:12px}
+  button.small.ok{background:var(--good);color:#fff;border-color:var(--good)}
+  .big{font-size:44px;font-weight:700;line-height:1}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;color:#fff}
+  .very\ low,.low{background:var(--good)}.medium{background:var(--warn)}.high,.very\ high{background:var(--bad)}
+  .bar{height:10px;border-radius:5px;background:var(--chip);position:relative;margin:4px 0 10px}
+  .bar i{position:absolute;top:0;bottom:0;border-radius:5px}
+  .factor{display:grid;grid-template-columns:150px 1fr 56px;gap:8px;align-items:center;font-size:13px;margin:5px 0}
+  .fbar{height:8px;background:var(--chip);border-radius:4px;position:relative}
+  .fbar b{position:absolute;top:0;bottom:0;border-radius:4px}
+  .mute{color:var(--mute);font-size:12px}
+  .warn{color:var(--warn);font-size:13px;margin:4px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{color:var(--mute);font-weight:600;position:sticky;top:0;background:var(--card)}
+  .tablewrap{max-height:520px;overflow:auto}
+  .hide{display:none}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+  .kpi{background:var(--chip);padding:8px 12px;border-radius:8px;font-size:12px;color:var(--mute)}
+  .kpi b{display:block;font-size:18px;color:var(--ink)}
+  tr.flag td:first-child{border-left:3px solid var(--bad)}
+  code{background:var(--chip);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>No-Show Risk Desk</h1>
+  <div class="sub">Decision support for human-reviewed appointment reminders</div>
+</header>
+<div class="banner" id="disc">Decision support only. Scores estimate attendance behaviour from booking data. They say nothing about diagnosis or urgency. Staff review every flag; nobody is cancelled, double-booked or deprioritised because of a score.</div>
+<main>
+<nav>
+  <button id="t1" class="on">Single booking</button>
+  <button id="t2">Review queue (CSV)</button>
+  <button id="t3">About the model</button>
+</nav>
+
+<section id="p1" class="grid">
+  <div class="card">
+    <div class="row2">
+      <div><label>Booking date &amp; time</label><input type="datetime-local" id="booking" value="2016-06-01T09:30"></div>
+      <div><label>Appointment date</label><input type="date" id="appt" value="2016-06-20"></div>
+    </div>
+    <div class="row2">
+      <div><label>Age</label><input type="number" id="age" min="0" max="110" value="24"></div>
+      <div><label>Neighbourhood</label><input id="nb" list="nbs" value="CENTRO"><datalist id="nbs"></datalist></div>
+    </div>
+    <div class="row2">
+      <div><label>Past appointments (already happened)</label><input type="number" id="pa" min="0" value="3"></div>
+      <div><label>…of which no-shows</label><input type="number" id="pn" min="0" value="2"></div>
+    </div>
+    <div class="row2">
+      <div><label>Days since last appointment</label><input type="number" id="ds" min="0" value="12" placeholder="blank if none"></div>
+      <div><label>Welfare scholarship</label><select id="sch"><option value="false">No</option><option value="true">Yes</option></select></div>
+    </div>
+    <button class="primary" id="go">Score this booking</button>
+    <div class="mute" style="margin-top:8px">Only data known at booking time is used. No diagnosis or clinical fields exist in this form.</div>
+  </div>
+  <div class="card" id="res"><div class="mute">Submit a booking to see a prediction from the saved model.</div></div>
+</section>
+
+<section id="p2" class="hide">
+  <div class="card">
+    <div class="mute">Upload a CSV with columns <code>booking_datetime, appointment_date, age, neighbourhood, scholarship, prior_appointments, prior_no_shows, days_since_last_appointment</code>. A ready-made file: <code>data/sample_bookings.csv</code>.</div>
+    <input type="file" id="csv" accept=".csv" style="margin-top:10px;max-width:420px">
+    <div class="kpis" id="kpis"></div>
+    <div class="tablewrap"><table id="q"><thead></thead><tbody></tbody></table></div>
+    <button class="primary hide" id="export">Export approved reminders (CSV)</button>
+  </div>
+</section>
+
+<section id="p3" class="hide"><div class="card" id="about">Loading…</div></section>
+</main>
+
+<script>
+const $=s=>document.querySelector(s);
+const pct=x=>(x*100).toFixed(1)+"%";
+let decisions={};
+function show(n){["1","2","3"].forEach(i=>{$("#p"+i).classList.toggle("hide",i!=n);$("#t"+i).classList.toggle("on",i==n)});}
+["1","2","3"].forEach(i=>$("#t"+i).onclick=()=>show(i));
+
+async function api(path,body){
+  const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);
+  const j=await r.json();
+  if(!r.ok) throw new Error(typeof j.detail==="string"?j.detail:JSON.stringify(j.detail,null,1));
+  return j;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+$("#go").onclick=async()=>{
+  const b={booking_datetime:$("#booking").value+":00",appointment_date:$("#appt").value,age:+$("#age").value,
+    neighbourhood:$("#nb").value,scholarship:$("#sch").value==="true",prior_appointments:+$("#pa").value||0,
+    prior_no_shows:+$("#pn").value||0,days_since_last_appointment:$("#ds").value===""?null:+$("#ds").value};
+  $("#res").innerHTML='<div class="mute">Scoring…</div>';
+  try{
+    const r=await api("/predict",b);
+    const maxE=Math.max(...r.top_factors.map(f=>Math.abs(f.effect_on_probability)),0.01);
+    const factors=r.top_factors.map(f=>{
+      const w=Math.abs(f.effect_on_probability)/maxE*50, up=f.effect_on_probability>0;
+      return `<div class="factor"><div>${esc(f.factor)}<div class="mute">${esc(f.value)}</div></div>
+        <div class="fbar"><b style="${up?'left:50%':'right:50%'};width:${w}%;background:${up?'var(--bad)':'var(--good)'}"></b></div>
+        <div style="text-align:right">${up?'+':''}${(f.effect_on_probability*100).toFixed(1)}pp</div></div>`}).join("");
+    $("#res").innerHTML=`
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div><div class="big">${pct(r.no_show_probability)}</div><div class="mute">estimated no-show probability</div></div>
+        <div><span class="pill ${r.risk_band}">${r.risk_band} risk</span>
+          <div class="mute" style="margin-top:6px">Among similar validation bookings, <b>${pct(r.historical_no_show_rate_in_band)}</b> did not attend.</div></div>
+      </div>
+      <p><b>${r.flag_for_reminder_review?'Flagged for reminder review':'Not flagged'}</b>
+        <span class="mute">(review threshold ${pct(r.decision_threshold)}; a person decides whether to send a reminder)</span></p>
+      <div style="margin:12px 0 4px;font-weight:600">Most influential inputs</div>
+      <div class="mute">Effect on the probability of resetting each input to a typical reference value. Red = pushes risk up.</div>
+      ${factors}
+      ${r.warnings.map(w=>`<div class="warn">⚠ ${esc(w)}</div>`).join("")}
+      <div class="mute" style="margin-top:10px">Uncertainty: the score is a population-level estimate. Individual behaviour is highly variable; even the highest-risk bookings are more likely to attend than not.</div>`;
+  }catch(e){$("#res").innerHTML=`<div class="warn">Error: <pre style="white-space:pre-wrap">${esc(e.message)}</pre></div>`}
+};
+
+// ---- CSV review queue ----
+function parseCSV(t){const L=t.trim().split(/\r?\n/);const h=L[0].split(",").map(s=>s.trim());
+  return L.slice(1).map(l=>{const v=l.split(",");const o={};h.forEach((k,i)=>o[k]=v[i]);return o})}
+let rows=[],results=[];
+$("#csv").onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  rows=parseCSV(await f.text());
+  const bookings=rows.map(r=>({booking_datetime:r.booking_datetime,appointment_date:r.appointment_date,age:+r.age,
+    neighbourhood:r.neighbourhood,scholarship:r.scholarship==="1"||r.scholarship==="true",prior_appointments:+r.prior_appointments||0,
+    prior_no_shows:+r.prior_no_shows||0,days_since_last_appointment:r.days_since_last_appointment===""||r.days_since_last_appointment===undefined?null:+r.days_since_last_appointment}));
+  try{
+    const out=await api("/predict/batch",{bookings,explain:false});
+    results=out.ranked_indices.map(i=>({i,row:rows[i],r:out.results[i]}));
+    decisions={}; renderQueue();
+  }catch(err){$("#kpis").innerHTML=`<div class="warn">Error: ${esc(err.message)}</div>`}
+};
+function renderQueue(){
+  const flagged=results.filter(x=>x.r.flag_for_reminder_review).length;
+  const approved=Object.values(decisions).filter(d=>d==="approved").length;
+  $("#kpis").innerHTML=`<div class="kpi"><b>${results.length}</b>bookings scored</div><div class="kpi"><b>${flagged}</b>flagged for review</div><div class="kpi"><b>${approved}</b>reminders approved by staff</div>`;
+  $("#q thead").innerHTML="<tr><th>Appt date</th><th>Age</th><th>Area</th><th>P(no-show)</th><th>Risk</th><th>Staff decision</th></tr>";
+  $("#q tbody").innerHTML=results.map((x,k)=>`<tr class="${x.r.flag_for_reminder_review?'flag':''}">
+    <td>${esc(x.row.appointment_date)}</td><td>${esc(x.row.age)}</td><td>${esc(x.row.neighbourhood)}</td>
+    <td>${pct(x.r.no_show_probability)}</td><td><span class="pill ${x.r.risk_band}">${x.r.risk_band}</span></td>
+    <td>${decisions[x.i]?`<b>${decisions[x.i]}</b> `:""}<button class="small ok" onclick="dec(${x.i},'approved')">Approve reminder</button>
+        <button class="small" onclick="dec(${x.i},'dismissed')">Dismiss</button></td></tr>`).join("");
+  $("#export").classList.toggle("hide",approved===0);
+}
+window.dec=(i,d)=>{decisions[i]=d;renderQueue()};
+$("#export").onclick=()=>{
+  const h=Object.keys(rows[0]);const a=results.filter(x=>decisions[x.i]==="approved");
+  const csv=[h.concat(["no_show_probability","approved_by_staff"]).join(",")].concat(a.map(x=>h.map(k=>x.row[k]).concat([x.r.no_show_probability,"yes"]).join(","))).join("\n");
+  const el=document.createElement("a");el.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));el.download="approved_reminders.csv";el.click();
+};
+
+// ---- about ----
+api("/model-info").then(m=>{
+  const md=m.metadata,t=md.test_metrics;
+  $("#nbs").innerHTML="";
+  $("#about").innerHTML=`<h3 style="margin-top:0">${esc(md.model_name)} (calibrated)</h3>
+   <div class="kpis"><div class="kpi"><b>${t.roc_auc}</b>ROC-AUC (test)</div><div class="kpi"><b>${t.pr_auc}</b>PR-AUC (test)</div>
+   <div class="kpi"><b>${pct(t.precision)}</b>precision @ threshold</div><div class="kpi"><b>${pct(t.recall)}</b>recall @ threshold</div>
+   <div class="kpi"><b>${t.brier_calibrated}</b>Brier (calibrated)</div></div>
+   <p class="mute">Trained ${esc(md.trained_at_utc)} on <b>${esc(md.data_source)}</b> data (${md.n_train.toLocaleString()} train / ${md.n_val.toLocaleString()} val / ${md.n_test.toLocaleString()} test, chronological split). Seed ${md.seed}.</p>
+   <p><b>Operating threshold:</b> ${pct(m.threshold)} — chosen on validation to minimise cost (unnecessary reminder = ${md.cost_false_positive}, missed no-show = ${md.cost_false_negative}; illustrative costs).</p>
+   <p><b>Limitations:</b> modest discrimination (precision ≈ ${pct(t.precision)}): most flagged patients would have attended anyway, so reminders must be low-cost and kind. Trained on a short window of data; patterns may drift. Neighbourhood and welfare-scholarship are socio-economic proxies — monitor for unequal treatment. Never use the score to deny, cancel or deprioritise care.</p>
+   <p class="mute">Features: ${m.features.map(esc).join(", ")}</p>`;
+}).catch(e=>{$("#about").innerHTML='<div class="warn">Model not loaded: '+esc(e.message)+'</div>'});
+</script>
+</body>
+</html>

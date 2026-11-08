@@ -1,0 +1,7 @@
+-r requirements.txt
+# only needed to re-execute the notebook
+nbformat
+nbconvert
+ipykernel
+# only needed to download the real Kaggle file via CLI (optional)
+kaggle
