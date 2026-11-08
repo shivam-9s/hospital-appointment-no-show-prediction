@@ -1,85 +1,651 @@
-# Hospital Appointment No-Show Prediction (decision support)
+# 🏥 Hospital Appointment No-Show Prediction
 
-Predicts the probability that a **booked appointment will be missed**, so front-desk staff can plan
-**human-reviewed reminder calls** and scheduling buffers. It never predicts diagnosis, urgency or clinical outcome.
+**An End-to-End Machine Learning Decision-Support System for Predicting Hospital Appointment No-Shows**
 
-| | |
+Predicts the probability that a **booked hospital appointment will be missed**, helping front-desk staff prioritize supportive, human-reviewed reminder calls.
+
+It does not predict diagnosis, urgency, severity, or clinical outcomes.
+
+<p align="center">
+
+[🚀 Live Streamlit Dashboard](https://hospital-appointment-no-show-prediction-sk.streamlit.app/) | [📂 GitHub Repository](https://github.com/shivam-9s/hospital-appointment-no-show-prediction)
+
+</p>
+
+---
+
+## 1. Project Overview
+
+Hospital appointment no-shows can affect scheduling efficiency, resource utilization, and patient access to healthcare services.
+
+This project develops an end-to-end machine learning pipeline to estimate the probability that a scheduled appointment will result in a no-show.
+
+The system supports human-reviewed reminder prioritization through individual predictions, batch scoring, risk categorization, and model explanations.
+
+### Problem Definition
+
+| Component | Description |
 |---|---|
-| **Business decision** | Which booked appointments get a reminder call/SMS (a person approves each one) |
-| **Prediction unit** | One scheduled appointment |
-| **Prediction time** | The moment of **booking** (`ScheduledDay`). Only information known then is used |
-| **Horizon** | Appointment date, 0-179 days after booking |
-| **Target** | `no_show = 1` if the patient did not attend |
-| **Split** | Chronological by appointment date: 60 % train / 20 % validation / 20 % test (most recent days) |
-| **Models** | Baselines (never-flag, flag-everyone, lead-time rule) vs Logistic Regression, Random Forest, Hist-Gradient-Boosting (selected) |
-| **Imbalance** | `class_weight` (balanced) + Platt probability calibration + cost-based threshold |
-| **Interface** | FastAPI (`/predict`, `/predict/batch`, `/model-info`) + browser dashboard with a staff review queue |
+| Business decision | Which booked appointments should be considered for a reminder call or SMS? |
+| Prediction unit | One scheduled appointment |
+| Prediction time | At booking time (`ScheduledDay`) |
+| Prediction horizon | Appointment date, 0–179 days after booking |
+| Target variable | `no_show = 1` if the patient did not attend |
+| Data splitting | Chronological by appointment date |
+| Models evaluated | Baselines, Logistic Regression, Random Forest, HistGradientBoosting |
+| Selected model | HistGradientBoosting |
+| Interface | FastAPI + Streamlit |
+| Human oversight | Every flagged appointment requires human review |
 
-> **Dataset.** Kaggle **"Medical Appointment No Shows"** (`joniarroba/noshowappointments`, 110,527 appointments, Vitória, Brazil, Apr-Jun 2016).
-> Download the CSV from Kaggle (unzip it) and place it in `data/raw/` - **any file name works** (e.g. `KaggleV2-May-2016.csv` or `noshowappointments-kagglev2-may-2016.csv`).
-> The raw file is git-ignored; check the dataset's licence on its Kaggle page before redistributing. If no Kaggle file is present, the pipeline falls back to a
-> schema-identical synthetic generator (`src/noshow/data_generator.py`) so everything can still be reproduced. All numbers in `reports/` and `docs/` come from the **real Kaggle data**.
+### Key Features
 
-## 1. Setup
+- Individual appointment no-show probability prediction.
+- Batch prediction through CSV uploads.
+- Ranked appointment review queue.
+- Five-level risk categorization.
+- Probability calibration.
+- Cost-based decision threshold.
+- Model explanations using reference-perturbation estimates.
+- Input validation and warnings.
+- FastAPI prediction endpoints.
+- Interactive Streamlit dashboard.
+- Automated tests for data leakage, model behaviour, and API functionality.
+
+---
+
+## 2. Live Application
+
+**Try the deployed application:**
+
+[Hospital Appointment No-Show Prediction – Streamlit Cloud](https://hospital-appointment-no-show-prediction-sk.streamlit.app/)
+
+The dashboard contains three sections:
+
+| Dashboard Section | Functionality |
+|---|---|
+| Single Appointment | Enter appointment details and calculate no-show probability |
+| Batch Review Queue | Upload CSV records, score appointments, and rank them by estimated risk |
+| Model & Safeguards | Explore model metadata, evaluation metrics, risk bands, and limitations |
+
+### Dashboard Preview
+
+Add your actual screenshots to `docs/images/` and use the following Markdown:
+
+```markdown
+### Single Appointment Prediction
+
+![Single Appointment Prediction](docs/images/single-prediction.png)
+
+### Batch Review Queue
+
+![Batch Review Queue](docs/images/batch-review.png)
+
+### Model Evaluation and Safeguards
+
+![Model Evaluation](docs/images/model-metrics.png)
+```
+
+---
+
+## 3. Dataset
+
+**Source:** Kaggle – Medical Appointment No Shows
+
+Dataset: [Medical Appointment No Shows](https://www.kaggle.com/datasets/joniarroba/noshowappointments)
+
+| Property | Description |
+|---|---|
+| Dataset identifier | `joniarroba/noshowappointments` |
+| Original records | 110,527 |
+| Location | Vitória, Brazil |
+| Collection period | April–June 2016 |
+| Target | No-show outcome |
+| Task | Binary classification |
+
+### Dataset Setup
+
+Download and unzip the Kaggle dataset.
+
+Place the CSV file inside:
+
+```text
+data/raw/
+```
+
+Any supported CSV filename can be used, for example:
+
+```text
+KaggleV2-May-2016.csv
+```
+
+or:
+
+```text
+noshowappointments-kagglev2-may-2016.csv
+```
+
+The raw dataset is excluded from Git using `.gitignore`.
+
+If the Kaggle dataset is unavailable, the pipeline supports a schema-identical synthetic data generator:
+
+```text
+src/noshow/data_generator.py
+```
+
+**Important:** Reported model metrics are based on the real Kaggle dataset, not synthetic fallback data.
+
+Check the dataset's licence on Kaggle before redistributing it.
+
+---
+
+## 4. Data Preparation and Leakage Prevention
+
+The model uses information available at booking time to prevent future information from influencing predictions.
+
+### Data Cleaning
+
+The preprocessing pipeline:
+
+- Removes invalid ages below 0 or above 110.
+- Removes appointments dated before their booking dates.
+- Excludes clinical columns such as `Hipertension`, `Diabetes`, `Alcoholism`, and `Handcap`.
+- Excludes `SMS_received`, which represents post-booking information.
+- Builds historical attendance features using only outcomes known before the current booking.
+
+### Feature Engineering
+
+Important model features include:
+
+- Age
+- Booking lead time
+- Log-transformed lead time
+- Scheduled hour
+- Previous appointments
+- Previous no-shows
+- Historical no-show rate
+- Days since last appointment
+- Scholarship indicator
+- Same-day booking indicator
+- Appointment weekday
+- Scheduled weekday
+- Neighbourhood
+
+### Chronological Data Splitting
+
+The dataset is divided chronologically by appointment date.
+
+| Dataset | Proportion |
+|---|---:|
+| Training | 60% |
+| Validation | 20% |
+| Testing | 20% |
+
+The most recent appointment dates are reserved for testing.
+
+The pipeline also includes checks to ensure future appointment outcomes do not influence current features.
+
+---
+
+## 5. Exploratory Data Analysis and Model Training
+
+The project compares simple baseline strategies with multiple machine learning algorithms.
+
+### Models Evaluated
+
+1. Never-flag baseline
+2. Flag-everyone baseline
+3. Lead-time rule baseline
+4. Logistic Regression
+5. Random Forest
+6. HistGradientBoosting
+
+**Selected model: HistGradientBoosting**
+
+The selected model uses engineered appointment features to estimate the probability of a no-show.
+
+### Training Configuration
+
+| Parameter | Value |
+|---|---:|
+| Algorithm | HistGradientBoosting |
+| Learning rate | 0.03 |
+| Maximum depth | 3 |
+| Maximum iterations | 300 |
+| Random seed | 42 |
+| Training samples | 63,529 |
+| Validation samples | 20,538 |
+| Test samples | 26,449 |
+
+### Class Imbalance and Calibration
+
+The pipeline uses class-imbalance handling, probability calibration, and a cost-based decision threshold.
+
+The selected threshold is approximately **0.17505 (17.5%)**.
+
+The project's illustrative cost assumptions are:
+
+- False positive cost: 1
+- False negative cost: 4
+
+These are modelling assumptions, not real hospital financial estimates.
+
+---
+
+## 6. Model Evaluation
+
+The following results are from the held-out test evaluation.
+
+### Performance Metrics
+
+| Metric | Result |
+|---|---:|
+| ROC-AUC | **0.7291** |
+| PR-AUC | **0.3296** |
+| Precision | 0.2744 |
+| Recall | **0.8689** |
+| F1-score | 0.4171 |
+| Calibrated Brier Score | 0.1359 |
+| Raw Brier Score | 0.2163 |
+| Review Threshold | 17.505% |
+
+### Confusion Matrix
+
+| Actual / Predicted | No-show | Show |
+|---|---:|---:|
+| Actual No-show | 4,242 | 640 |
+| Actual Show | 11,216 | 10,351 |
+
+### Cost-Based Threshold
+
+The threshold is selected using the assumed relative costs of false positives and false negatives.
+
+It determines which appointments are flagged for staff review.
+
+A flagged prediction does not authorize an automatic reminder or any change to patient care.
+
+### Risk Categorization
+
+The dashboard categorizes predicted probabilities into five risk bands.
+
+| Risk Band | Probability Range |
+|---|---|
+| Very Low | 0–10% |
+| Low | 10–20% |
+| Medium | 20–30% |
+| High | 30–45% |
+| Very High | 45–100% |
+
+The dashboard also displays historically observed validation no-show rates for these risk bands.
+
+---
+
+## 7. System Architecture
+
+The project separates data preparation, model training, inference, API functionality, and dashboard presentation.
+
+```mermaid
+flowchart TD
+    A["Kaggle Dataset"] --> B["Data Cleaning"]
+    B --> C["Feature Engineering"]
+    C --> D["Chronological Splitting"]
+    D --> E["Model Training"]
+    E --> F["Probability Calibration"]
+    F --> G["Threshold Selection"]
+    G --> H["Saved Model Artifact"]
+    H --> I["Prediction Module"]
+    I --> J["FastAPI"]
+    I --> K["Streamlit Dashboard"]
+    K --> L["Single Prediction"]
+    K --> M["Batch Prediction"]
+    L --> N["Human Review"]
+    M --> N
+```
+
+### Prediction Workflow
+
+1. Receive appointment information.
+2. Validate the input.
+3. Generate engineered features.
+4. Load the trained model artifact.
+5. Calculate the no-show probability.
+6. Assign a risk band.
+7. Compare the probability against the review threshold.
+8. Display relevant explanations and warnings.
+9. Require human review.
+
+---
+
+## 8. Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Programming Language | Python |
+| Data Processing | Pandas, NumPy |
+| Machine Learning | Scikit-learn |
+| Visualization | Matplotlib |
+| Model Persistence | Joblib |
+| Backend API | FastAPI |
+| Interactive Dashboard | Streamlit |
+| API Testing | HTTPX |
+| Automated Testing | Pytest |
+| Version Control | Git, GitHub |
+| Deployment | Streamlit Community Cloud |
+
+---
+
+## 9. Repository Structure
+
+```text
+hospital-appointment-no-show-prediction/
+│
+├── dashboard/
+│   └── streamlit_app.py
+│
+├── src/
+│   └── noshow/
+│       ├── __init__.py
+│       ├── config.py
+│       ├── data_generator.py
+│       ├── data_prep.py
+│       ├── features.py
+│       ├── train.py
+│       ├── eda.py
+│       ├── predict.py
+│       └── api.py
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│
+├── models/
+│   └── noshow_model.joblib
+│
+├── reports/
+│
+├── tests/
+│   ├── test_data_and_leakage.py
+│   └── test_model_and_api.py
+│
+├── scripts/
+│   └── make_sample_bookings.py
+│
+├── notebooks/
+│
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
+
+This is a representation of the main components. Check the repository for any additional files before treating it as an exhaustive directory listing.
+
+---
+
+## 10. Installation and Setup
+
+### Step 1: Clone the Repository
+
 ```bash
-python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt                         # Python 3.10-3.13; exact tested versions: requirements-tested.txt
-export PYTHONPATH=src                                   # Windows PowerShell: $env:PYTHONPATH="src"
+git clone https://github.com/shivam-9s/hospital-appointment-no-show-prediction.git
+
+cd hospital-appointment-no-show-prediction
 ```
 
-> **Important:** `models/noshow_model.joblib` in the zip was saved with scikit-learn 1.9.1. If your scikit-learn version differs,
-> loading it can fail - just retrain (step 3, `python -m noshow.train`, ~35 s) before starting the API or running tests.
+### Step 2: Create a Virtual Environment
 
-## 2. Data preparation (reproduces the dataset + split)
 ```bash
-# Real Kaggle data: put the downloaded CSV in data/raw/  (used automatically)
-# (optional CLI: pip install kaggle ; kaggle datasets download -d joniarroba/noshowappointments -p data/raw --unzip ; copy .env.example -> .env)
-# No Kaggle file? synthetic fallback:  python -m noshow.data_generator   # -> data/raw/appointments_synthetic.csv
-python -m noshow.data_prep                 # -> data/processed/appointments_clean.csv + data_quality_report.json
+python -m venv .venv
 ```
-Cleaning drops invalid ages (<0 or >110) and appointments dated before their booking; removes clinical columns
-(`Hipertension, Diabetes, Alcoholism, Handcap`) and `SMS_received` (post-booking); builds leakage-safe history features;
-assigns the chronological `split` column.
 
-## 3. EDA and training
+Activate on Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Activate on Linux/macOS:
+
 ```bash
-python -m noshow.eda                       # figures 01-04 + reports/eda_summary.json (incl. leakage review)
-python -m noshow.train                     # ~35 s; trains, tunes on validation, evaluates ONCE on test
-                                           # -> models/noshow_model.joblib, reports/metrics.json, figures 05-11
-python scripts/make_sample_bookings.py     # data/sample_bookings.csv (test-period bookings, no outcomes) for the dashboard
+source .venv/bin/activate
 ```
-Same seed + same data => **identical `metrics.json`** (verified by running the whole pipeline twice from scratch).
-Notebook walkthrough: `notebooks/01_eda_and_results.ipynb` (already executed).
 
-## 4. Tests
+### Step 3: Install Dependencies
+
 ```bash
-python -m pytest -q tests                  # 22 tests: cleaning, leakage/time-travel, split, artifact, API, validation
+python -m pip install --upgrade pip
+
+pip install -r requirements.txt
 ```
 
-## 5. Inference API / dashboard
+The project uses pinned versions for model compatibility.
+
+### Step 4: Configure Python Path
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="src"
+```
+
+Linux/macOS:
+
 ```bash
-python -m uvicorn noshow.api:app --port 8000
-# dashboard: http://localhost:8000      interactive API docs: http://localhost:8000/docs
-curl -s localhost:8000/predict -H 'content-type: application/json' -d '{
-  "booking_datetime":"2016-06-01T09:30:00","appointment_date":"2016-06-20","age":24,"neighbourhood":"JARDIM CAMBURI",
-  "scholarship":true,"prior_appointments":3,"prior_no_shows":2,"days_since_last_appointment":12}'
-```
-Every response comes from `models/noshow_model.joblib` (pipeline + calibrator): calibrated probability, risk band with the
-historically observed rate for that band, review flag, the **top influencing inputs** (occlusion explanation), warnings
-(unknown neighbourhood, no history, extrapolated lead time) and a disclaimer. `human_review_required` is always `true`.
-Dashboard tabs: *Single booking*, *Review queue* (upload CSV -> ranked list -> staff clicks **Approve reminder / Dismiss** -> export approved list), *About the model*.
-
-## 6. Repository layout
-```
-src/noshow/   config, data_generator, data_prep, features, train, eda, predict, api
-app/static/   index.html (dashboard)          tests/   pytest suite        scripts/  sample-file helper
-data/         raw/, processed/, sample_bookings.csv        models/  saved artifact
-reports/      REPORT.md (technical report), metrics.json, eda_summary.json, figures/
-docs/         MODEL_CARD.md, DEMO_VIDEO_SCRIPT.md, SUBMISSION_FORM_ANSWERS.md
-notebooks/    01_eda_and_results.ipynb
+export PYTHONPATH=src
 ```
 
-## 7. Known limitations / unfinished
-* The 3-5 min demo video is not included (cannot be recorded here); `docs/DEMO_VIDEO_SCRIPT.md` is a shot-by-shot script.
-* Cost figures (reminder = 1, missed slot = 4) are illustrative assumptions; replace with the hospital's real numbers in `config.py`.
-* No authentication/audit logging on the API - it is an MVP for local use. Not for production with real patient data.
+### Step 5: Run the Streamlit Dashboard
+
+```bash
+streamlit run dashboard/streamlit_app.py
+```
+
+Open the local URL provided by Streamlit, usually:
+
+```text
+http://localhost:8501
+```
+
+**Model artifact requirement:** The saved artifact must be available at `models/noshow_model.joblib`. If you retrain the model, use the project's compatible environment and update the artifact accordingly.
+
+---
+
+## 11. Data Preparation and Training Commands
+
+If the Kaggle CSV is available, place it in `data/raw/`.
+
+Optional synthetic data generation:
+
+```bash
+python -m noshow.data_generator
+```
+
+Prepare the dataset:
+
+```bash
+python -m noshow.data_prep
+```
+
+Run exploratory data analysis:
+
+```bash
+python -m noshow.eda
+```
+
+Train and evaluate the model:
+
+```bash
+python -m noshow.train
+```
+
+Generate sample bookings for batch prediction:
+
+```bash
+python scripts/make_sample_bookings.py
+```
+
+These commands assume the corresponding modules and scripts are present in your checkout.
+
+---
+
+## 12. FastAPI Prediction Service
+
+The project includes a separate FastAPI service.
+
+API module:
+
+```text
+src/noshow/api.py
+```
+
+Prediction module:
+
+```text
+src/noshow/predict.py
+```
+
+Start the API:
+
+```bash
+python -m uvicorn noshow.api:app --host 127.0.0.1 --port 8000
+```
+
+Interactive API documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/predict` | POST | Predict an individual appointment |
+| `/predict/batch` | POST | Predict multiple appointments |
+| `/model-info` | GET | Retrieve model information |
+
+Example individual prediction request:
+
+```json
+{
+  "booking_datetime": "2016-06-01T09:30:00",
+  "appointment_date": "2016-06-20",
+  "age": 24,
+  "neighbourhood": "JARDIM CAMBURI",
+  "scholarship": true,
+  "prior_appointments": 3,
+  "prior_no_shows": 2,
+  "days_since_last_appointment": 12
+}
+```
+
+The prediction layer provides probabilities, risk bands, review flags, explanations, and input warnings.
+
+**Deployment architecture:** The deployed Streamlit dashboard calls the prediction module directly. It does not require a separate FastAPI server to be running. FastAPI remains available for independent API demonstrations.
+
+---
+
+## 13. Automated Testing
+
+The project includes tests for data processing, leakage prevention, model behaviour, API functionality, and input validation.
+
+Run the complete test suite:
+
+```powershell
+$env:PYTHONPATH="src"
+python -m pytest -v
+```
+
+### Latest Test Results
+
+| Test Category | Status |
+|---|---|
+| Data cleaning | Passed |
+| Feature leakage prevention | Passed |
+| Chronological splitting | Passed |
+| Model artifact validation | Passed |
+| Train-serve consistency | Passed |
+| Prediction endpoints | Passed |
+| Input validation | Passed |
+| Batch ranking | Passed |
+| Timezone handling | Passed |
+
+**Latest result: 25 passed, 0 failed.**
+
+---
+
+## 14. Deployment
+
+The interactive dashboard is deployed using Streamlit Community Cloud.
+
+**Live URL:**
+
+https://hospital-appointment-no-show-prediction-sk.streamlit.app/
+
+### Deployment Environment
+
+| Component | Version |
+|---|---|
+| Python | 3.12.16 |
+| scikit-learn | 1.7.2 |
+| NumPy | 2.2.6 |
+| Pandas | 2.3.3 |
+| SciPy | 1.15.3 |
+| Joblib | 1.6.0 |
+
+The model artifact was trained using Python 3.10.11 and scikit-learn 1.7.2. The deployed environment uses scikit-learn 1.7.2 to maintain compatibility with the saved artifact.
+
+---
+
+## 15. Responsible Use and Limitations
+
+This project is an educational and research-oriented portfolio prototype.
+
+- Predictions are not diagnoses or measures of clinical need.
+- The system does not automatically send reminders.
+- Every flagged appointment requires human review.
+- Never cancel, double-book, overbook, or deprioritize care based on a prediction.
+- Historical data comes from public hospitals in Vitória, Brazil, in 2016.
+- The dataset may not represent another hospital or current patient population.
+- Neighbourhood and scholarship variables may act as socioeconomic proxies and require fairness monitoring.
+- The API and dashboard do not provide authentication or audit logging.
+- Do not upload real patient data.
+- Cost assumptions are illustrative and should be replaced with locally validated estimates before any real-world evaluation.
+
+---
+
+## 16. Key Learning Outcomes
+
+This project provided practical experience with:
+
+- End-to-end machine learning development.
+- Data cleaning and exploratory data analysis.
+- Feature engineering.
+- Chronological train-validation-test splitting.
+- Prevention of data leakage.
+- Handling class imbalance.
+- Gradient boosting classification.
+- Probability calibration.
+- Cost-based threshold selection.
+- Model evaluation and interpretation.
+- REST API development using FastAPI.
+- Interactive dashboard development using Streamlit.
+- Batch inference and risk ranking.
+- Automated testing using Pytest.
+- GitHub version control and cloud deployment.
+
+---
+
+## 17. Author
+
+**Shivam Kumar**
+
+B.Tech Computer Science and Engineering Student
+
+- GitHub: [@shivam-9s](https://github.com/shivam-9s)
+- Repository: [Hospital Appointment No-Show Prediction](https://github.com/shivam-9s/hospital-appointment-no-show-prediction)
+- Live Application: [Streamlit Dashboard](https://hospital-appointment-no-show-prediction-sk.streamlit.app/)
+
+---
+
+⭐ If you find this project interesting, consider giving the repository a star!
+
+*Built as an end-to-end machine learning research and portfolio project.*
